@@ -57,9 +57,6 @@ The goal of this project is to create a simple and interactive task management a
 
 ## Future Improvements
 
-- 🔍 Add task search functionality
-- 🗂️ Introduce task filters (All, Active, Completed)
-- ✏️ Allow users to edit existing tasks
 - 🌙 Add dark and light themes
 - 🚀 Improve task organization and productivity features
 
