@@ -122,3 +122,139 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial Render
     renderTasks();
 });
+
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+let currentFilter = 'all';
+let editingId = null;
+
+// ---------- ADD TASK ----------
+function addTask() {
+    const input = document.getElementById('taskInput');
+    const priority = document.getElementById('priorityInput').value;
+    const text = input.value.trim();
+    if (text === '') return;
+
+    tasks.push({
+        id: Date.now(),
+        text: text,
+        completed: false,
+        priority: priority
+    });
+
+    input.value = '';
+    saveAndRender();
+}
+
+// ---------- SAVE & RENDER ----------
+function saveAndRender() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderTasks();
+}
+
+// ---------- RENDER TASKS ----------
+function renderTasks() {
+    const list = document.getElementById('taskList');
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    list.innerHTML = '';
+
+    let filtered = tasks.filter(task => {
+        // Filter by status
+        if (currentFilter === 'active' && task.completed) return false;
+        if (currentFilter === 'completed' && !task.completed) return false;
+        // Filter by search
+        if (search && !task.text.toLowerCase().includes(search)) return false;
+        return true;
+    });
+
+    filtered.forEach(task => {
+        const li = document.createElement('li');
+        li.className = `priority-${task.priority}`;
+        if (task.completed) li.classList.add('completed');
+
+        // Task text or edit input
+        if (editingId === task.id) {
+            const editInput = document.createElement('input');
+            editInput.type = 'text';
+            editInput.value = task.text;
+            editInput.id = 'editInput';
+            li.appendChild(editInput);
+        } else {
+            const span = document.createElement('span');
+            span.textContent = task.text;
+            li.appendChild(span);
+        }
+
+        // Actions
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        if (editingId === task.id) {
+            // Save button
+            const saveBtn = document.createElement('button');
+            saveBtn.textContent = '💾';
+            saveBtn.onclick = () => saveEdit(task.id);
+            actions.appendChild(saveBtn);
+
+            // Cancel button
+            const cancelBtn = document.createElement('button');
+            cancelBtn.textContent = '❌';
+            cancelBtn.onclick = () => { editingId = null; renderTasks(); };
+            actions.appendChild(cancelBtn);
+        } else {
+            // Toggle complete
+            const toggleBtn = document.createElement('button');
+            toggleBtn.textContent = task.completed ? '↩️' : '✅';
+            toggleBtn.onclick = () => toggleTask(task.id);
+            actions.appendChild(toggleBtn);
+
+            // Edit
+            const editBtn = document.createElement('button');
+            editBtn.textContent = '✏️';
+            editBtn.onclick = () => { editingId = task.id; renderTasks(); };
+            actions.appendChild(editBtn);
+
+            // Delete
+            const delBtn = document.createElement('button');
+            delBtn.textContent = '🗑️';
+            delBtn.onclick = () => deleteTask(task.id);
+            actions.appendChild(delBtn);
+        }
+
+        li.appendChild(actions);
+        list.appendChild(li);
+    });
+}
+
+// ---------- TOGGLE ----------
+function toggleTask(id) {
+    const task = tasks.find(t => t.id === id);
+    task.completed = !task.completed;
+    saveAndRender();
+}
+
+// ---------- DELETE ----------
+function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveAndRender();
+}
+
+// ---------- EDIT ----------
+function saveEdit(id) {
+    const newText = document.getElementById('editInput').value.trim();
+    if (newText === '') return;
+    const task = tasks.find(t => t.id === id);
+    task.text = newText;
+    editingId = null;
+    saveAndRender();
+}
+
+// ---------- FILTER ----------
+function setFilter(filter) {
+    currentFilter = filter;
+    document.querySelectorAll('.filters button').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+    renderTasks();
+}
+
+// ---------- INITIAL RENDER ----------
+renderTasks();
